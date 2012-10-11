@@ -47,7 +47,7 @@ rpc.prototype._connect = function(cb)  {
 
     this.__conn.addListener('ready', function(){
 
-       console.log("connected to " + $this.__conn.serverProperties.product);
+       // console.log("connected to " + $this.__conn.serverProperties.product);
 
         var cbs = $this.__connCbs;
         $this.__connCbs = [];
@@ -71,8 +71,8 @@ rpc.prototype._makeExchange = function(cb) {
         return cb(this.__exchange);
     }
 
-    this.__exchange = this.__conn.exchange('123', {}, function(exchange)    {
-        console.log('Exchange ' + exchange.name + ' is open');
+    this.__exchange = this.__conn.exchange('remote_callback_exchange', {}, function(exchange)    {
+        // console.log('Exchange ' + exchange.name + ' is open');
         cb();
     });
 }
