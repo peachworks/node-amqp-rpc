@@ -71,7 +71,7 @@ rpc.prototype._makeExchange = function(cb) {
         return cb(this.__exchange);
     }
 
-    this.__exchange = this.__conn.exchange('123', {}, function(exchange)    {
+    this.__exchange = this.__conn.exchange(this.__exchange_name, {}, function(exchange)    {
         console.log('Exchange ' + exchange.name + ' is open');
         cb();
     });
