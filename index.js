@@ -47,7 +47,7 @@ rpc.prototype._connect = function(cb)  {
 
     this.__conn.addListener('ready', function(){
 
-       console.log("connected to " + $this.__conn.serverProperties.product);
+//       console.log("connected to " + $this.__conn.serverProperties.product);
 
         var cbs = $this.__connCbs;
         $this.__connCbs = [];
@@ -71,8 +71,8 @@ rpc.prototype._makeExchange = function(cb) {
         return cb(this.__exchange);
     }
 
-    this.__exchange = this.__conn.exchange(this.__exchange_name, {}, function(exchange)    {
-        console.log('Exchange ' + exchange.name + ' is open');
+    this.__exchange = this.__conn.exchange(this.__exchange_name, {confirm: true}, function(exchange)    {
+//        console.log('Exchange ' + exchange.name + ' is open');
         cb();
     });
 }
@@ -119,7 +119,9 @@ rpc.prototype._makeResultsQueue = function(cb) {
 
 rpc.prototype.__onResult = function(message, headers, deliveryInfo)   {
 
-    if(! this.__results_cb[ deliveryInfo.correlationId ]) return;
+    if(! this.__results_cb[ deliveryInfo.correlationId ]) {
+        return;
+    }
 
     var cb = this.__results_cb[ deliveryInfo.correlationId ];
 
@@ -167,8 +169,10 @@ rpc.prototype.call = function(cmd, params, cb, context, options) {
                     options.mandatory = true;
                     options.replyTo   = $this.__results_queue_name;
                     options.correlationId = corr_id;
-                    //options.domain    = "localhost";
+                    options.immediate = true;
 
+                    //options.domain    = "localhost";
+                    //console.log("making request", options)
                     $this.__exchange.publish(
                         cmd,
                         params,
@@ -176,7 +180,7 @@ rpc.prototype.call = function(cmd, params, cb, context, options) {
                         function(err)   {
                             if(err) {
                                 delete $this.__results_cb[ corr_id ];
-
+                                console.log("UNTRUSTED SERVER: oh boy, an error here:", err)
                                 cb(err);
                             }
                         }
@@ -192,7 +196,15 @@ rpc.prototype.call = function(cmd, params, cb, context, options) {
                 $this.__exchange.publish(
                     cmd,
                     params,
-                    options
+                    options,
+                    function(err)   {
+                        if(err) {
+                            delete $this.__results_cb[ corr_id ];
+                            console.log("UNTRUSTED SERVER: oh boy, an error here2:", err)
+                            cb(err);
+                        }
+                    }
+
                 );
             });
         }
@@ -232,14 +244,25 @@ rpc.prototype.on = function(cmd, cb, context)    {
 
                     return cb.call(context, message, function(err, data)   {
 
+                        // console.log("amqp-rpc:", deliveryInfo)
                         var options = {
-                            correlationId: deliveryInfo.correlationId
+                            correlationId: deliveryInfo.correlationId,
+                            mandatory: true,
+                            immediate: true
                         }
 
                         $this.__exchange.publish(
                             deliveryInfo.replyTo,
                             arguments,
-                            options
+                            options,
+                            function(err)   {
+                                if(err) {
+                                    delete $this.__results_cb[ corr_id ];
+                                    console.log("amqp-rpc: oh boy, an error here3:", err)
+                                    cb(err);
+                                }
+                            }
+
                         );
                     }, cmdInfo);
                 }
