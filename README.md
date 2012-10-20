@@ -13,10 +13,9 @@ Tested with RabbitMQ under ubuntu.
 
     npm install amqp-rpc
 
-
 ###server.js example
 
-    var rpc = require('ampq-rpc').factory({
+    var rpc = require('amqp-rpc').factory({
         url: "amqp://guest:guest@localhost:5672"
     });
 
@@ -52,7 +51,7 @@ Tested with RabbitMQ under ubuntu.
 
 ###client.js example
 
-    var rpc = require('ampq-rpc').factory({
+    var rpc = require('amqp-rpc').factory({
         url: "amqp://guest:guest@localhost:5672"
     });
 

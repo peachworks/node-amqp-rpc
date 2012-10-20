@@ -25,6 +25,7 @@
         }
     ],
     "dependencies": {
-        "amqp": ">=0.1.3"
+        "amqp" : ">=0.1.3",
+        "node-uuid" : "*" 
     }
 }
