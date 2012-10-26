@@ -54,7 +54,7 @@ rpc.prototype._connect = function(cb)  {
 
     this.__conn.addListener('ready', function(){
 
-       console.log("connected to " + $this.__conn.serverProperties.product);
+       // console.log("connected to " + $this.__conn.serverProperties.product);
 
         var cbs = $this.__connCbs;
         $this.__connCbs = [];
@@ -98,7 +98,7 @@ rpc.prototype._makeExchange = function(cb) {
     this.__exchangeCbs.push(cb);
 
     this.__exchange = this.__conn.exchange(this.__exchange_name, {}, function(exchange)    {
-        console.log('Exchange ' + exchange.name + ' is open');
+        // console.log('Exchange ' + exchange.name + ' is open');
 
         var cbs = $this.__exchangeCbs;
         $this.__exchangeCbs = [];
@@ -204,6 +204,7 @@ rpc.prototype.call = function(cmd, params, cb, context, options) {
                     options.replyTo   = $this.__results_queue_name;
                     options.correlationId = corr_id;
                     //options.domain    = "localhost";
+                    options.immediate = true;
 
                     $this.__exchange.publish(
                         cmd,
@@ -269,7 +270,9 @@ rpc.prototype.on = function(cmd, cb, context)    {
                     return cb.call(context, message, function(err, data)   {
 
                         var options = {
-                            correlationId: deliveryInfo.correlationId
+                            correlationId: deliveryInfo.correlationId,
+                            mandatory: true,
+                            immediation: true
                         }
 
                         $this.__exchange.publish(
