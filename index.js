@@ -204,7 +204,6 @@ rpc.prototype.call = function(cmd, params, cb, context, options) {
                     options.replyTo   = $this.__results_queue_name;
                     options.correlationId = corr_id;
                     //options.domain    = "localhost";
-                    options.immediate = true;
 
                     $this.__exchange.publish(
                         cmd,
