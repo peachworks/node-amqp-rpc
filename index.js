@@ -48,8 +48,7 @@ rpc.prototype._connect = function(cb)  {
     this.__connCbs.push(cb);
 
     this.__conn = amqp.createConnection(
-        {url: this.__url},
-        {defaultExchangeName: this.__exchange_name}
+        {url: this.__url}
     );
 
     this.__conn.addListener('ready', function(){
@@ -97,7 +96,7 @@ rpc.prototype._makeExchange = function(cb) {
 
     this.__exchangeCbs.push(cb);
 
-    this.__exchange = this.__conn.exchange(this.__exchange_name, {}, function(exchange)    {
+    this.__exchange = this.__conn.exchange(this.__exchange_name, this.__exchange_options, function(exchange)    {
         // console.log('Exchange ' + exchange.name + ' is open');
 
         var cbs = $this.__exchangeCbs;
