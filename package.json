@@ -25,7 +25,7 @@
         }
     ],
     "dependencies": {
-        "amqp": "git://github.com/whentomanage/node-amqp.git#v10.01"
+        "amqp": "git://github.com/whentomanage/node-amqp.git#v10.01",
 	"node-uuid": "*"
     }
 }
