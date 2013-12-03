@@ -14,6 +14,7 @@ function rpc(opt)   {
     this.__exchange         = opt.exchangeInstance ? opt.exchangeInstance : null;
     this.__exchange_name    = opt.exchange ? opt.exchange : 'rpc_exchange';
     this.__exchange_options = opt.exchange_options ? opt.exchange_options : {exclusive: true, autoDelete: true };
+    this.__impl_options     = opt.ipml_options || {defaultExchangeName: this.__exchange_name};
 
     this.__results_queue = null;
     this.__results_queue_name = null;
@@ -56,13 +57,11 @@ rpc.prototype._connect = function(cb)  {
     this.__connCbs.push(cb);
 
     this.__conn = amqp.createConnection(
-        {url: this.__url}
+        {url: this.__url},
+        this.__impl_options
     );
 
     this.__conn.addListener('ready', function(){
-
-       //console.log("connected to " + $this.__conn.serverProperties.product);
-
         var cbs = $this.__connCbs;
         $this.__connCbs = [];
 
@@ -110,8 +109,6 @@ rpc.prototype._makeExchange = function(cb) {
     this.__exchangeCbs.push(cb);
 
     this.__exchange = this.__conn.exchange(this.__exchange_name, this.__exchange_options, function(exchange)    {
-        // console.log('Exchange ' + exchange.name + ' is open');
-
         var cbs = $this.__exchangeCbs;
         $this.__exchangeCbs = [];
 
