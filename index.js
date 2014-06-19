@@ -1,8 +1,9 @@
 
 
+var util = require('util')
+var EventEmitter = require('events').EventEmitter
 var amqp = require('amqp');
 var uuid = require('node-uuid').v4;
-
 
 function rpc(opt)   {
 
@@ -11,7 +12,8 @@ function rpc(opt)   {
     this.__url              = opt.url ? opt.url: 'amqp://guest:guest@localhost:5672';
     this.__exchange         = opt.exchangeInstance ? opt.exchangeInstance : null;
     this.__exchange_name    = opt.exchange ? opt.exchange : 'rpc_exchange';
-    this.__exchange_options = opt.exchange_options ? opt.exchange_options : {exclusive: true, autoDelete: true };
+    this.__auto_delete = (process.env.NODE_ENV === 'test' ||process.env.NODE_ENV === 'development')
+    this.__exchange_options = opt.exchange_options ? opt.exchange_options : {exclusive: true, autoDelete: this.__auto_delete, durable: true };
 
     this.__results_queue = null;
     this.__results_queue_name = null;
@@ -22,7 +24,11 @@ function rpc(opt)   {
 
     this.__connCbs = [];
     this.__exchangeCbs = [];
+
+    EventEmitter.call(this)
 }
+
+util.inherits(rpc, EventEmitter)
 
 
 rpc.prototype._connect = function(cb)  {
@@ -53,7 +59,7 @@ rpc.prototype._connect = function(cb)  {
 
     this.__conn.addListener('ready', function(){
 
-       // console.log("connected to " + $this.__conn.serverProperties.product);
+       //console.log("connected to " + $this.__conn.serverProperties.product);
 
         var cbs = $this.__connCbs;
         $this.__connCbs = [];
@@ -62,6 +68,11 @@ rpc.prototype._connect = function(cb)  {
             cbs[i]($this.__conn);
         }
     });
+
+    this.__conn.addListener('close', function() {
+      $this.emit('close')
+    })
+
 }
 /**
  * disconnect from MQ broker
@@ -186,6 +197,7 @@ rpc.prototype.call = function(cmd, params, cb, context, options) {
     if(!options) options = {};
 
     options.contentType = 'application/json';
+    options.deliveryMode = 2
 
     this._connect(function() {
 
@@ -251,7 +263,7 @@ rpc.prototype.on = function(cmd, cb, context)    {
 
     this._connect(function()    {
 
-        $this.__conn.queue(cmd, function(queue) {
+        $this.__conn.queue(cmd, {autoDelete: $this.__auto_delete, durable: true}, function(queue) {
 
             $this.__cmds[ cmd ] = { queue: queue };
             queue.subscribe(function(message, d, headers, deliveryInfo)  {
@@ -270,7 +282,8 @@ rpc.prototype.on = function(cmd, cb, context)    {
                         var options = {
                             correlationId: deliveryInfo.correlationId,
                             mandatory: true,
-                            immediation: true
+                            immediation: true,
+														deliveryMode: 2
                         }
 
                         $this.__exchange.publish(
@@ -348,6 +361,11 @@ rpc.prototype.off = function(cmd)    {
     return true;
 }
 
+// {{{ on
+var onEvent = EventEmitter.prototype.on
+rpc.prototype.onEvent = function(event) {
+  return onEvent.apply(this, arguments)
+} // }}}
 
 module.exports.amqpRPC = rpc;
 
