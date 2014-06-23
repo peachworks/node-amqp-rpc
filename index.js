@@ -12,8 +12,7 @@ function rpc(opt)   {
     this.__url              = opt.url ? opt.url: 'amqp://guest:guest@localhost:5672';
     this.__exchange         = opt.exchangeInstance ? opt.exchangeInstance : null;
     this.__exchange_name    = opt.exchange ? opt.exchange : 'rpc_exchange';
-    this.__auto_delete = (process.env.NODE_ENV === 'test' ||process.env.NODE_ENV === 'development')
-    this.__exchange_options = opt.exchange_options ? opt.exchange_options : {exclusive: true, autoDelete: this.__auto_delete, durable: true };
+    this.__exchange_options = opt.exchange_options ? opt.exchange_options : {exclusive: true, autoDelete: true };
 
     this.__results_queue = null;
     this.__results_queue_name = null;
@@ -197,7 +196,6 @@ rpc.prototype.call = function(cmd, params, cb, context, options) {
     if(!options) options = {};
 
     options.contentType = 'application/json';
-    options.deliveryMode = 2
 
     this._connect(function() {
 
@@ -263,7 +261,7 @@ rpc.prototype.on = function(cmd, cb, context)    {
 
     this._connect(function()    {
 
-        $this.__conn.queue(cmd, {autoDelete: $this.__auto_delete, durable: true}, function(queue) {
+        $this.__conn.queue(cmd, function(queue) {
 
             $this.__cmds[ cmd ] = { queue: queue };
             queue.subscribe(function(message, d, headers, deliveryInfo)  {
@@ -282,8 +280,7 @@ rpc.prototype.on = function(cmd, cb, context)    {
                         var options = {
                             correlationId: deliveryInfo.correlationId,
                             mandatory: true,
-                            immediation: true,
-														deliveryMode: 2
+                            immediation: true
                         }
 
                         $this.__exchange.publish(
