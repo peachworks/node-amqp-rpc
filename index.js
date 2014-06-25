@@ -1,8 +1,9 @@
 
 
+var util = require('util')
+var EventEmitter = require('events').EventEmitter
 var amqp = require('amqp');
 var uuid = require('node-uuid').v4;
-
 
 function rpc(opt)   {
 
@@ -22,7 +23,11 @@ function rpc(opt)   {
 
     this.__connCbs = [];
     this.__exchangeCbs = [];
+
+    EventEmitter.call(this)
 }
+
+util.inherits(rpc, EventEmitter)
 
 
 rpc.prototype._connect = function(cb)  {
@@ -53,7 +58,7 @@ rpc.prototype._connect = function(cb)  {
 
     this.__conn.addListener('ready', function(){
 
-       // console.log("connected to " + $this.__conn.serverProperties.product);
+       //console.log("connected to " + $this.__conn.serverProperties.product);
 
         var cbs = $this.__connCbs;
         $this.__connCbs = [];
@@ -62,6 +67,11 @@ rpc.prototype._connect = function(cb)  {
             cbs[i]($this.__conn);
         }
     });
+
+    this.__conn.addListener('close', function() {
+      $this.emit('close')
+    })
+
 }
 /**
  * disconnect from MQ broker
@@ -348,6 +358,11 @@ rpc.prototype.off = function(cmd)    {
     return true;
 }
 
+// {{{ on
+var onEvent = EventEmitter.prototype.on
+rpc.prototype.onEvent = function(event) {
+  return onEvent.apply(this, arguments)
+} // }}}
 
 module.exports.amqpRPC = rpc;
 
