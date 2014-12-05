@@ -15,6 +15,7 @@ function rpc(opt)   {
     this.__exchange_name    = opt.exchange ? opt.exchange : 'rpc_exchange';
     this.__exchange_options = opt.exchange_options ? opt.exchange_options : {exclusive: true, autoDelete: true };
     this.__impl_options     = opt.ipml_options || {defaultExchangeName: this.__exchange_name};
+    this.__conn_options     = opt.conn_options || {};
 
     this.__results_queue = null;
     this.__results_queue_name = null;
@@ -56,8 +57,11 @@ rpc.prototype._connect = function(cb)  {
 
     this.__connCbs.push(cb);
 
+    var options = this.__conn_options;
+    if(!options.url) options.url = this.__url;
+
     this.__conn = amqp.createConnection(
-        {url: this.__url},
+        options,
         this.__impl_options
     );
 
